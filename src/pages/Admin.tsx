@@ -32,8 +32,8 @@ const Admin = () => {
       try {
         setError(null);
         
-        // Fetch emails
-        const emailsResponse = await apiCall('emails');
+        // Fetch signups (changed from 'emails' to 'signups')
+        const emailsResponse = await apiCall('signups');
         const emailsData = await emailsResponse.json();
         
         // Fetch stats  
@@ -41,7 +41,7 @@ const Admin = () => {
         const statsData = await statsResponse.json();
         
         if (emailsData.success) {
-          setEmails(emailsData.emails);
+          setEmails(emailsData.signups || []);
         }
         
         if (statsData.success) {
@@ -84,7 +84,7 @@ const Admin = () => {
   const handleClearEmails = async () => {
     if (window.confirm('Are you sure you want to delete all email entries? This cannot be undone.')) {
       try {
-        const response = await apiCall('emails', {
+        const response = await apiCall('signups', {
           method: 'DELETE'
         });
         

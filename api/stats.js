@@ -1,5 +1,5 @@
 // Stats API for Vercel deployment with Supabase PostgreSQL
-import { getEmails as supabaseGetEmails, calculateStats } from '../lib/supabase.js';
+import { getSignups as supabaseGetSignups, calculateStats } from '../lib/supabase.js';
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -16,16 +16,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get emails from Supabase PostgreSQL and calculate real stats
-    const emails = await supabaseGetEmails();
+    // Get signups from Supabase PostgreSQL and calculate real stats
+    const emails = await supabaseGetSignups();
     const stats = calculateStats(emails);
 
     res.json({ 
       success: true, 
       stats,
       message: emails.length > 0 
-        ? `Live stats from ${emails.length} real database submissions!` 
-        : 'Database ready - no submissions yet.'
+        ? `Live stats from ${emails.length} real signup submissions!` 
+        : 'Database ready - no signup submissions yet.'
     });
   } catch (error) {
     console.error('Stats API Error:', error);
