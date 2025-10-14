@@ -81,25 +81,57 @@ const Admin = () => {
     document.body.removeChild(link);
   };
 
+  const handleTestConnection = async () => {
+    try {
+      console.log('Testing Supabase connection...');
+      const response = await apiCall('health-signups');
+      const result = await response.json();
+      
+      console.log('Health check result:', result);
+      
+      if (result.success) {
+        alert(`Database connection successful!\n\nConnection: ${result.connection}\nTable Access: ${result.tableAccess}\nInsert Permission: ${result.insertPermission}\nDelete Permission: ${result.deletePermission}\nCurrent Record Count: ${result.currentRecordCount}`);
+      } else {
+        alert(`Database connection failed!\nError: ${result.error}\nDetails: ${result.details}`);
+      }
+    } catch (error) {
+      console.error('Health check error:', error);
+      alert(`Health check failed: ${error.message}`);
+    }
+  };
+
   const handleClearEmails = async () => {
     if (window.confirm('Are you sure you want to delete all email entries? This cannot be undone.')) {
       try {
+        console.log('Attempting to delete all signups...');
         const response = await apiCall('signups', {
           method: 'DELETE'
         });
         
+        console.log('Delete response status:', response.status);
+        console.log('Delete response headers:', response.headers);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Delete request failed:', response.status, errorText);
+          alert(`Delete request failed with status ${response.status}. Check console for details.`);
+          return;
+        }
+        
         const result = await response.json();
+        console.log('Delete response result:', result);
         
         if (result.success) {
           setEmails([]);
           setStats({ total: 0, today: 0, week: 0 });
           alert(`Successfully deleted ${result.deletedCount} email records.`);
         } else {
-          alert('Failed to delete emails. Please try again.');
+          console.error('Delete failed:', result);
+          alert(`Failed to delete emails: ${result.error || 'Unknown error'}`);
         }
       } catch (error) {
         console.error('Error deleting emails:', error);
-        alert('Network error. Please try again.');
+        alert(`Network error: ${error.message}. Check console for details.`);
       }
     }
   };
@@ -179,6 +211,16 @@ const Admin = () => {
           </div>
 
           <div className="flex gap-3">
+            <Button 
+              onClick={handleTestConnection}
+              variant="secondary" 
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Mail className="w-4 h-4" />
+              Test DB
+            </Button>
+            
             {emails.length > 0 && (
               <>
                 <Button 

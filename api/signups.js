@@ -61,13 +61,24 @@ export default async function handler(req, res) {
 
     if (req.method === 'DELETE') {
       // Clear all signups from Supabase PostgreSQL
-      const deletedCount = await clearAllSignups();
-      
-      return res.json({ 
-        success: true, 
-        message: `Successfully deleted ${deletedCount} signup records from database`,
-        deletedCount
-      });
+      console.log('DELETE request received for signups');
+      try {
+        const deletedCount = await clearAllSignups();
+        console.log(`Successfully deleted ${deletedCount} signup records`);
+        
+        return res.json({ 
+          success: true, 
+          message: `Successfully deleted ${deletedCount} signup records from database`,
+          deletedCount
+        });
+      } catch (deleteError) {
+        console.error('Delete operation failed:', deleteError);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to delete signups',
+          details: deleteError.message || deleteError.toString()
+        });
+      }
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
