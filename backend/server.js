@@ -13,7 +13,17 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:8081', 'http://localhost:8082', 'http://localhost:3000', 'http://127.0.0.1:8081', 'http://127.0.0.1:8082', 'https://www.trydooza.com', 'https://trydooza.com'],
+  origin: [
+    'http://localhost:8080',
+    'http://localhost:8081',
+    'http://localhost:8082',
+    'http://localhost:3000',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:8081',
+    'http://127.0.0.1:8082',
+    'https://www.trydooza.com',
+    'https://trydooza.com'
+  ],
   credentials: true
 }));
 app.use(express.json());
@@ -49,12 +59,12 @@ app.get('/api/health', (req, res) => {
 // Submit email
 app.post('/api/emails', (req, res) => {
   const { email } = req.body;
-  
+
   // Validate email
   if (!email || !email.includes('@')) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       error: 'Valid email address is required',
-      success: false 
+      success: false
     });
   }
 
@@ -72,17 +82,61 @@ app.post('/api/emails', (req, res) => {
     function(err) {
       if (err) {
         console.error('Database error:', err);
-        return res.status(500).json({ 
+        return res.status(500).json({
           error: 'Failed to save email',
-          success: false 
+          success: false
         });
       }
-      
+
       console.log(`New email saved: ${emailData.email} at ${emailData.timestamp}`);
-      res.status(201).json({ 
-        success: true, 
+      res.status(201).json({
+        success: true,
         message: 'Email saved successfully',
         id: emailData.id
+      });
+    }
+  );
+});
+
+// Alias for signups - same functionality as emails
+app.post('/api/signups', (req, res) => {
+  const { email } = req.body;
+
+  // Validate email
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({
+      error: 'Valid email address is required',
+      success: false
+    });
+  }
+
+  const emailData = {
+    id: uuidv4(),
+    email: email.toLowerCase().trim(),
+    timestamp: new Date().toISOString(),
+    ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+    user_agent: req.get('User-Agent') || 'unknown'
+  };
+
+  db.run(
+    `INSERT INTO emails (id, email, timestamp, ip_address, user_agent) VALUES (?, ?, ?, ?, ?)`,
+    [emailData.id, emailData.email, emailData.timestamp, emailData.ip_address, emailData.user_agent],
+    function(err) {
+      if (err) {
+        console.error('Database error:', err);
+        return res.status(500).json({
+          error: 'Failed to save signup',
+          success: false
+        });
+      }
+
+      console.log(`New signup saved: ${emailData.email} at ${emailData.timestamp}`);
+      res.status(201).json({
+        success: true,
+        message: 'Signup saved successfully',
+        id: emailData.id,
+        email: emailData.email,
+        timestamp: emailData.timestamp
       });
     }
   );
@@ -154,16 +208,61 @@ app.delete('/api/emails', (req, res) => {
   db.run(`DELETE FROM emails`, function(err) {
     if (err) {
       console.error('Database error:', err);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to delete emails',
-        success: false 
+        success: false
       });
     }
-    
+
     console.log(`Deleted ${this.changes} email records`);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `Deleted ${this.changes} email records`,
+      deletedCount: this.changes
+    });
+  });
+});
+
+// Alias routes for signups - same functionality as emails
+app.get('/api/signups', (req, res) => {
+  db.all(
+    `SELECT * FROM emails ORDER BY timestamp DESC`,
+    [],
+    (err, rows) => {
+      if (err) {
+        console.error('Database error:', err);
+        return res.status(500).json({
+          error: 'Failed to retrieve signups',
+          success: false
+        });
+      }
+
+      res.json({
+        success: true,
+        signups: rows,
+        total: rows.length,
+        message: rows.length > 0
+          ? `${rows.length} signup submissions retrieved from database`
+          : 'No signup submissions yet. Database is ready to collect signups!'
+      });
+    }
+  );
+});
+
+app.delete('/api/signups', (req, res) => {
+  db.run(`DELETE FROM emails`, function(err) {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({
+        error: 'Failed to delete signups',
+        success: false
+      });
+    }
+
+    console.log(`Deleted ${this.changes} signup records`);
+    res.json({
+      success: true,
+      message: `Successfully deleted ${this.changes} signup records from database`,
       deletedCount: this.changes
     });
   });
