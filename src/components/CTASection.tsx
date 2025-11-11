@@ -46,7 +46,7 @@ const CTASection = () => {
             className="rounded-full transition-all duration-300 hover:scale-110 border-2 hover:bg-accent hover:text-accent-foreground"
             onClick={() => window.open('https://cal.com/sibinarendran/demo', '_blank')}
           >
-            Book a Call
+            Book Free Instant Setup Call
           </Button>
         </div>
         <div className={`mt-12 flex justify-center gap-12 text-sm text-muted-foreground transition-all duration-700 ${
